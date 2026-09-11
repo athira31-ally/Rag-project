@@ -230,11 +230,4 @@ and how those findings map onto the design choices in this repo (why
 Qdrant, and where its tradeoffs actually matter for a multi-tenant,
 continuously-updated document Q&A workload).
 
-## Background
 
-I built the production version of this system (Talkument) as a Junior ML
-Engineer at Nighthawk Technology, on AWS EKS with Kong, Qdrant, Celery,
-Redis, and PostgreSQL — including the HNSW/payload-indexing tuning, the
-Redis cache-stampede fix, and the citation system referenced above. This
-repository is an independent, from-scratch rebuild for my portfolio; it
-contains no code, data, or client information from that employer.
