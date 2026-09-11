@@ -132,16 +132,4 @@ docker compose -f docker/docker-compose.yml up --build
 pytest -q
 ```
 
-13 tests, all offline — chunking edge cases, embedding determinism, a full
-ingest → query roundtrip against a real (local) Qdrant instance, workspace
-isolation, cache-stampede protection under concurrent load, and the FastAPI
-routes end to end.
 
-## Background
-
-I built the production version of this system (Talkument) as a Junior ML
-Engineer at Nighthawk Technology, on AWS EKS with Kong, Qdrant, Celery,
-Redis, and PostgreSQL — including the HNSW/payload-indexing tuning, the
-Redis cache-stampede fix, and the citation system referenced above. This
-repository is an independent, from-scratch rebuild for my portfolio; it
-contains no code, data, or client information from that employer.
