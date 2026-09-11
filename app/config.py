@@ -45,5 +45,29 @@ class Settings(BaseSettings):
     chunk_size_tokens: int = 300
     chunk_overlap_tokens: int = 50
 
+    # --- Auth ---
+    auth_provider: str = "fake"  # fake | google
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    jwt_secret: str = "dev-secret-change-me-in-production-32-bytes-min"
+    jwt_expire_minutes: int = 60
+
+    # --- OCR ---
+    ocr_fallback_provider: str = "none"  # none | openai
+    openai_vision_model: str = "gpt-4o-mini"
+
+    # --- Voice ---
+    stt_provider: str = "stub"  # stub | openai
+    tts_provider: str = "stub"  # stub | openai
+    openai_stt_model: str = "whisper-1"
+    openai_tts_model: str = "tts-1"
+    openai_tts_voice: str = "alloy"
+
+    # --- Tracing ---
+    tracer_provider: str = "console"  # none | console | langfuse
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
+
 
 settings = Settings()

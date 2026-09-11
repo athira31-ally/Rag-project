@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from app.models import Citation
 
-_SNIPPET_MAX_CHARS = 240
+_SNIPPET_MAX_CHARS = 320
 
 
 def to_citations(hits) -> list[Citation]:

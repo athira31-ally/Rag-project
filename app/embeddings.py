@@ -14,6 +14,23 @@ from typing import Protocol
 
 from app.config import settings
 
+# A small, fixed stopword list -- no external NLP dependency. Skipping these
+# before hashing matters a lot for a bag-of-words-style embedding: without
+# it, high-frequency function words ("to", "the", "of") can dominate the
+# similarity signal over the low-frequency content words ("refund",
+# "shipping") that actually distinguish one document from another.
+_STOPWORDS = frozenset(
+    """
+    a an the of to in on for at by from with as is are was were be been being
+    this that these those it its it's and or but if then than so not no nor
+    do does did doing have has had having will would shall should can could
+    may might must i you he she we they what which who whom my your his her
+    our their about into over under again further once here there when where
+    why how all any both each few more most other some such only own same
+    just don't should've now
+    """.split()
+)
+
 
 class EmbeddingProvider(Protocol):
     dim: int
@@ -41,7 +58,8 @@ class HashingEmbeddingProvider:
     def _embed_one(self, text: str) -> list[float]:
         vec = [0.0] * self.dim
         words = text.lower().split()
-        shingles = words if words else [text.lower()]
+        content_words = [w for w in words if w not in _STOPWORDS] or words
+        shingles = content_words if content_words else [text.lower()]
         for shingle in shingles:
             digest = hashlib.sha256(shingle.encode("utf-8")).digest()
             idx = int.from_bytes(digest[:4], "big") % self.dim

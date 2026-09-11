@@ -9,12 +9,19 @@ information from that work.
 
 ## What it does
 
-1. **Ingest** — text is chunked with overlap, embedded, and upserted into
-   Qdrant with tenant (`workspace_id`) and document metadata as indexed
-   payload fields.
-2. **Query** — the question is embedded, Qdrant returns the nearest chunks
-   (scoped to the caller's workspace via a server-side filter), and the
-   response includes both an answer and the citations it came from.
+1. **Ingest** — text (or a scanned image, via OCR) is chunked with overlap,
+   embedded, and upserted into Qdrant with tenant (`workspace_id`) and
+   document metadata as indexed payload fields.
+2. **Query** — the question (typed or spoken) is embedded, Qdrant returns
+   the nearest chunks (scoped to the caller's workspace via a server-side
+   filter), and the response includes an answer, its citations, and —
+   for the voice route — a synthesized audio reply.
+3. **Auth** — Google OAuth2 login issues a JWT session; a `me`/dev-token
+   flow makes local development and tests possible without real Google
+   credentials.
+4. **Observability** — every ingest/query call runs inside a trace span
+   (console-logged by default, pluggable to Langfuse), and a small
+   promptfoo-style YAML eval suite checks retrieval/answer quality.
 
 ```
         POST /documents                      POST /query
@@ -69,6 +76,33 @@ API still returns a real answer (extractive, from the top citation) instead
 of failing — useful for local dev and for keeping citations testable without
 needing an API key.
 
+**OCR with a fallback chain.** `app/ocr.py` runs a real local OCR engine
+(Tesseract, via `pytesseract` — no API key, no network) as the default, and
+falls back to a cloud vision model only when the local pass returns
+suspiciously little text (a proxy for "this scan is too poor to read
+locally"). `tests/test_ocr.py` renders text into a synthetic image and
+verifies Tesseract actually reads it back — a real integration test, not a
+mock.
+
+**Voice Q&A with fully offline defaults.** Speech-to-text and text-to-speech
+are pluggable the same way embeddings are: the default `stub` STT/TTS
+providers make `/voice/query` genuinely exercisable end to end (upload →
+transcript → RAG query → synthesized WAV reply) without a model download or
+an API key, and swapping in Whisper/OpenAI TTS is a config change.
+
+**Auth kept testable, not just "real."** `app/auth.py` implements a real
+Google OAuth2 flow, but defaults to a deterministic fake provider so `/auth`
+routes, JWT issuance, and the `get_current_user` dependency are covered by
+tests without live Google credentials.
+
+**Tracing and evals as part of the pipeline, not bolted on after.**
+`RagPipeline.ingest`/`query` wrap each step in a trace span
+(`app/tracing.py`); `scripts/run_evals.py` runs a small YAML suite of
+question → expected-citation/answer assertions against the live pipeline
+and is itself covered by `tests/test_evals.py`, so a retrieval-quality
+regression shows up in `pytest`, not just when someone remembers to run it
+by hand.
+
 ## Project layout
 
 ```
@@ -81,16 +115,25 @@ app/
   citations.py          maps Qdrant hits -> Citation objects
   cache.py              Redis cache with stampede protection
   llm.py                pluggable answer generation (extractive or LLM)
-  rag_pipeline.py       ties the above together for ingest/query
+  ocr.py                OCR pipeline with local + cloud-fallback providers
+  voice.py              speech-to-text / text-to-speech providers
+  auth.py               Google OAuth2 + JWT session handling
+  tracing.py            pluggable tracer (console / in-memory / Langfuse)
+  rag_pipeline.py       ties the above together for ingest/query, traced
   celery_app.py, tasks.py   async ingestion
-  routes/               FastAPI route handlers
-tests/                pytest suite (chunking, embeddings, cache, full
-                       ingest->query roundtrip, API tests) — all run
-                       offline, no external services needed
+  routes/               FastAPI route handlers (documents, query, voice, auth, health)
+tests/                pytest suite — chunking, embeddings, cache, OCR
+                       (real Tesseract), voice, auth, tracing, evals, and a
+                       full ingest->query API roundtrip — all run offline
+scripts/
+  run_evals.py          promptfoo-style eval runner (also run by pytest)
+  evals/cases.yaml       eval suite: questions + expected citations/answers
 sample_data/          generic example documents for the quickstart
-docker/               Dockerfile + docker-compose (api, worker, qdrant, redis)
+docker/               Dockerfile (incl. tesseract-ocr) + docker-compose
+                       (api, worker, qdrant, redis)
 k8s/                  illustrative EKS manifests (Deployment/Service/HPA)
                        and a Kong route/rate-limit example
+DEPLOYMENT.md         build/push/deploy walkthrough for this app on EKS + Kong
 ```
 
 ## Quickstart (local, no external services)
@@ -126,16 +169,47 @@ DB/model/LLM, copy `.env.example` to `.env` and fill in `QDRANT_URL`,
 docker compose -f docker/docker-compose.yml up --build
 ```
 
+## Trying the new routes
+
+```bash
+# Auth: get a dev session token (no real Google credentials needed locally)
+TOKEN=$(curl -s -X POST localhost:8000/auth/dev-token | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+curl localhost:8000/auth/me -H "Authorization: Bearer $TOKEN"
+
+# OCR: ingest a scanned image
+curl -X POST localhost:8000/documents/ocr \
+  -F "file=@scan.png" -F "title=Scanned Note" -F "workspace_id=demo"
+
+# Voice: upload audio (or, with the default stub STT, a text file standing
+# in for a transcript) and get back an answer plus a synthesized WAV reply
+curl -X POST localhost:8000/voice/query \
+  -F "audio=@question.wav" -F "workspace_id=demo"
+```
+
+## Evals
+
+```bash
+python scripts/run_evals.py
+```
+
+Runs the suite in `scripts/evals/cases.yaml` against the live pipeline and
+prints a pass/fail table — useful as a CI gate for retrieval-quality
+regressions.
+
 ## Tests
 
 ```bash
 pytest -q
 ```
 
-13 tests, all offline — chunking edge cases, embedding determinism, a full
+27 tests, all offline — chunking edge cases, embedding determinism, a full
 ingest → query roundtrip against a real (local) Qdrant instance, workspace
-isolation, cache-stampede protection under concurrent load, and the FastAPI
-routes end to end.
+isolation, cache-stampede protection under concurrent load, real OCR via
+Tesseract, voice provider behavior, auth/JWT flow, tracing spans, the eval
+suite, and the FastAPI routes end to end.
+
+See `DEPLOYMENT.md` for a walkthrough of building the image, deploying to
+EKS, and putting it behind Kong.
 
 ## Background
 

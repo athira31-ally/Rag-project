@@ -1,0 +1,26 @@
+# Promptfoo-style evaluation cases: each one ingests fixture documents (if
+# not already present), asks a question, and asserts on the retrieved
+# citation and/or answer content. Run with: python scripts/run_evals.py
+workspace_id: eval
+
+fixtures:
+  - title: Refund Policy
+    file: sample_data/refund_policy.txt
+  - title: Shipping Policy
+    file: sample_data/shipping_policy.txt
+
+cases:
+  - name: refund_timing
+    question: How long do refunds take to process?
+    expect_top_citation_title: Refund Policy
+    expect_answer_contains: ["five business days"]
+
+  - name: shipping_timing
+    question: How long does standard shipping take?
+    expect_top_citation_title: Shipping Policy
+    expect_answer_contains: ["seven", "ten"]
+
+  - name: enterprise_refund_terms
+    question: What refund terms apply to enterprise contracts?
+    expect_top_citation_title: Refund Policy
+    expect_answer_contains: ["master service agreement"]
