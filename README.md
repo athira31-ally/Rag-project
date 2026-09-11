@@ -1,11 +1,5 @@
 # Talkument RAG 
 
-A from-scratch, original implementation of a RAG-based document Q&A
-service — the same architecture and problems I worked on building a
-production system (multi-tenant retrieval on Qdrant, deployed on EKS behind
-a Kong gateway, with async ingestion and a citation system), rebuilt here
-independently with generic sample data and no proprietary code or client
-information from that work.
 
 ## What it does
 
