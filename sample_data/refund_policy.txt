@@ -1,0 +1,9 @@
+Acme Cloud Storage - Refund Policy
+
+Refunds for annual subscriptions are issued within five business days of a
+verified cancellation request. Monthly subscriptions are not eligible for
+partial-period refunds; access continues until the end of the current
+billing cycle. Store credit, where offered as an alternative, is applied
+immediately at checkout and does not require the five-day processing
+window. Enterprise contracts follow the refund terms negotiated in the
+master service agreement rather than this default policy.

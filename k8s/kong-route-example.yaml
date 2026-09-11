@@ -1,0 +1,19 @@
+# Illustrative Kong Ingress Controller route -- shows the gateway pattern
+# (path-based routing + rate limiting) without any real host/service names.
+apiVersion: configuration.konghq.com/v1
+kind: KongIngress
+metadata:
+  name: talkument-rag-route
+route:
+  paths:
+    - /api/rag
+  strip_path: true
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: rag-rate-limit
+plugin: rate-limiting
+config:
+  minute: 60
+  policy: local

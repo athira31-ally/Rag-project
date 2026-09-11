@@ -1,0 +1,73 @@
+# Generic, illustrative Kubernetes manifests for running the API on EKS.
+# No cluster names, account IDs, or environment-specific values -- fill in
+# the image reference and any config via a Kustomize overlay or Helm values
+# file per environment.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: talkument-rag-api
+  labels:
+    app: talkument-rag-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: talkument-rag-api
+  template:
+    metadata:
+      labels:
+        app: talkument-rag-api
+    spec:
+      containers:
+        - name: api
+          image: talkument-rag-api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: talkument-rag-config
+            - secretRef:
+                name: talkument-rag-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: talkument-rag-api
+spec:
+  selector:
+    app: talkument-rag-api
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: talkument-rag-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: talkument-rag-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

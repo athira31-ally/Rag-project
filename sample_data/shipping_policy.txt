@@ -1,0 +1,8 @@
+Acme Cloud Storage - Hardware Shipping Policy
+
+Standard shipping for backup appliances takes seven to ten business days
+within the primary service region, and twelve to eighteen business days
+for international orders. Expedited shipping is available at checkout for
+an additional fee and reduces standard delivery windows by roughly half.
+Tracking information is emailed automatically once a warehouse marks an
+order as fulfilled.
