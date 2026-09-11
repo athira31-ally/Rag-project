@@ -211,3 +211,30 @@ suite, and the FastAPI routes end to end.
 See `DEPLOYMENT.md` for a walkthrough of building the image, deploying to
 EKS, and putting it behind Kong.
 
+## Benchmarks behind the design
+
+Qdrant wasn't picked arbitrarily. I co-authored a published empirical
+comparison of Qdrant against MemVid (video-encoded vector storage) and
+Amazon S3 Vectors across indexing time, retrieval latency, storage
+footprint, and scalability:
+
+> Vishrut Nath Jha, Joanne Anto, Athira KK, "Performance Comparison of
+> Video-Based, Graph-Based, and Cloud-Hosted Vector Storage Systems: An
+> Empirical Study of MemVid, Qdrant, and Amazon S3 Vector," *International
+> Journal of Scientific Research & Engineering Trends*, Vol. 12, Issue 1,
+> Jan–Feb 2026.
+> [Full paper (PDF)](https://ijsret.com/wp-content/uploads/IJSRET_V12_issue1_112.pdf)
+
+See [`BENCHMARKS.md`](./BENCHMARKS.md) for the methodology, result tables,
+and how those findings map onto the design choices in this repo (why
+Qdrant, and where its tradeoffs actually matter for a multi-tenant,
+continuously-updated document Q&A workload).
+
+## Background
+
+I built the production version of this system (Talkument) as a Junior ML
+Engineer at Nighthawk Technology, on AWS EKS with Kong, Qdrant, Celery,
+Redis, and PostgreSQL — including the HNSW/payload-indexing tuning, the
+Redis cache-stampede fix, and the citation system referenced above. This
+repository is an independent, from-scratch rebuild for my portfolio; it
+contains no code, data, or client information from that employer.
