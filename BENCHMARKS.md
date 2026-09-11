@@ -82,10 +82,4 @@ excellent scalability, and support for live updates without full
 reindexing was the better fit than MemVid's static-corpus strengths or S3
 Vectors' cost-optimized-but-less-flexible model.
 
-## Stated limitations (from the paper)
 
-Small query set size, a single domain (medical/clinical-trial literature),
-a moderate corpus size (10,417 chunks), and default parameter settings
-without domain-specific tuning. Numbers above are as reported in the paper;
-see the PDF linked above for the full methodology, hardware details, and
-complete result tables.
