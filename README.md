@@ -1,4 +1,4 @@
-# Talkument RAG (portfolio rebuild)
+# Talkument RAG 
 
 A from-scratch, original implementation of a RAG-based document Q&A
 service — the same architecture and problems I worked on building a
